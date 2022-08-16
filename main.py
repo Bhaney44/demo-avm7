@@ -26,8 +26,13 @@ def demo():
     app_client.delete()
 
 def call_block_ops(app_client: client.ApplicationClient):
+    """ Calls the new block header accessors for getting timestamp and 
+        seed from a historical block
+    """
+    # Lower the range of last-first so we get access to more blocks
     sp = app_client.client.suggested_params()
     sp.last = sp.first+5
+
     result = app_client.call(DemoAVM7.block, suggested_params=sp)
     ts, hash = result.return_value
     print(f"Block Timestamp: {ts}")
