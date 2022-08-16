@@ -34,11 +34,15 @@ class DemoAVM7(Application):
         #sha3_256            
         return Approve()
 
+    BlockSeed = abi.StaticArray[abi.Byte, Literal[32]]
+    BlockDetails = abi.Tuple2[abi.Uint64, BlockSeed]
     @external
-    def block(self):
-        # seed
-        #block  (Seed and timestamp)
-        return Approve()
+    def block(self, *, output: BlockDetails):
+        return Seq(
+            (ts := abi.Uint64()).set(Block.timestamp(Global.round() - Int(3))),
+            (seed := abi.make(self.BlockSeed)).decode(Block.seed(Global.round() - Int(3))),
+            output.set(ts, seed)
+        ) 
 
 
     @delete(authorize=Authorize.only(Global.creator_address()))
