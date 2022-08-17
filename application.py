@@ -3,12 +3,31 @@ from typing import Literal
 from pyteal import *
 from beaker import *
 
+# Define some types by name for handy reference
+
+VrfProof = abi.StaticArray[abi.Byte, Literal[80]]
+VrfHash = abi.StaticArray[abi.Byte, Literal[64]]
+
+
+BlockSeed = abi.StaticArray[abi.Byte, Literal[32]]
+
+
+class BlockDetails(abi.NamedTuple):
+    ts: abi.Field[abi.Uint64]
+    seed: abi.Field[BlockSeed]
+
+
+Signature = abi.StaticArray[abi.Byte, Literal[64]]
+
+
+class JsonExampleResult(abi.NamedTuple):
+    string_key: abi.Field[abi.String]
+    uint_key: abi.Field[abi.Uint64]
+    obj_key: abi.Field[abi.String]
+
 
 class DemoAVM7(Application):
     """Examples for teal ops that are new for AVM 7"""
-
-    VrfProof = abi.StaticArray[abi.Byte, Literal[80]]
-    VrfHash = abi.StaticArray[abi.Byte, Literal[64]]
 
     @external
     def vrf_verify(
@@ -40,10 +59,26 @@ class DemoAVM7(Application):
             output.decode(vrf_result.output_slots[0].load()),
         )
 
-    class JsonExampleResult(abi.NamedTuple):
-        string_key: abi.Field[abi.String]
-        uint_key: abi.Field[abi.Uint64]
-        obj_key: abi.Field[abi.String]
+    @external
+    def block(self, round: abi.Uint64, *, output: BlockDetails):
+        """New block operations for getting timestamp or seed of a historical round"""
+        return Seq(
+            (ts := abi.Uint64()).set(Block.timestamp(round.get())),
+            (seed := abi.make(BlockSeed)).decode(Block.seed(round.get())),
+            output.set(ts, seed),
+        )
+
+    @external
+    def b64decode(self, b64encoded: abi.String, *, output: abi.String):
+        """Base64Decode can be used to decode either a std or url encoded string
+
+        Note:
+            IF you have the option to decode prior to submitting the app call
+            transaction, you _should_.
+            This should _only_ be used in the case that there is no way to decode
+            the bytestring prior to submitting the transaction.
+        """
+        return output.set(Base64Decode.std(b64encoded.get()))
 
     @external
     def json_ref(self, json_str: abi.String, *, output: JsonExampleResult):
@@ -59,30 +94,6 @@ class DemoAVM7(Application):
             ),
             output.set(s, i, o),
         )
-
-    BlockSeed = abi.StaticArray[abi.Byte, Literal[32]]
-    BlockDetails = abi.Tuple2[abi.Uint64, BlockSeed]
-
-    @external
-    def block(self, round: abi.Uint64, *, output: BlockDetails):
-        """New block operations for getting timestamp or seed of a historical round"""
-        return Seq(
-            (ts := abi.Uint64()).set(Block.timestamp(round.get())),
-            (seed := abi.make(self.BlockSeed)).decode(Block.seed(round.get())),
-            output.set(ts, seed),
-        )
-
-    @external
-    def b64decode(self, b64encoded: abi.String, *, output: abi.String):
-        """Base64Decode can be used to decode either a std or url encoded string
-
-        Note:
-            IF you have the option to decode prior to submitting the app call
-            transaction, you _should_.
-            This should _only_ be used in the case that there is no way to decode
-            the bytestring prior to submitting the transaction.
-        """
-        return output.set(Base64Decode.std(b64encoded.get()))
 
     @external
     def sha3_256(self, to_hash: abi.String, *, output: abi.DynamicArray[abi.Byte]):
@@ -100,10 +111,7 @@ class DemoAVM7(Application):
         *,
         output: abi.String,
     ):
-        """Handy"""
         return output.set(Replace(orig.get(), start.get(), replace_with.get()))
-
-    Signature = abi.StaticArray[abi.Byte, Literal[64]]
 
     @external
     def ed25519verify_bare(self, msg: abi.String, sig: Signature, *, output: abi.Bool):
