@@ -1,4 +1,5 @@
 import base64
+from dataclasses import replace
 import json
 from hashlib import sha3_256
 from algosdk.encoding import encode_address
@@ -34,7 +35,16 @@ def demo():
 
 
 def call_replace(app_client: client.ApplicationClient):
-    pass
+    msg = "replace these bytes"
+    start = msg.find("these")
+    replace_with = "those"
+
+    result = app_client.call(
+        DemoAVM7.replace, orig=msg, start=start, replace_with=replace_with
+    )
+    print(f"got: {result.return_value}")
+
+    assert result.return_value == "replace those bytes"
 
 
 def call_sha3_256(app_client: client.ApplicationClient):

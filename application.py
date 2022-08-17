@@ -1,3 +1,4 @@
+from re import I
 from typing import Literal
 
 from pyteal import *
@@ -89,10 +90,16 @@ class DemoAVM7(Application):
         )
 
     @external
-    def replace(self):
-        # replace2
-        # replace3
-        return Approve()
+    def replace(
+        self,
+        orig: abi.String,
+        start: abi.Uint64,
+        replace_with: abi.String,
+        *,
+        output: abi.String,
+    ):
+        """Handy"""
+        return output.set(Replace(orig.get(), start.get(), replace_with.get()))
 
     @external
     def ed25519verify_bare(self):
