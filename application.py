@@ -49,10 +49,22 @@ class DemoAVM7(Application):
         # base64_decode
         return Approve()
 
+    JsonExampleResult = abi.Tuple3[abi.String, abi.Uint64, abi.String]
+
     @external
-    def json_ref(self):
-        # json_ref
-        return Approve()
+    def json_ref(self, json_str: abi.String, *, output: JsonExampleResult):
+        return Seq(
+            (s := abi.String()).set(
+                JsonRef.as_string(json_str.get(), Bytes("string_key"))
+            ),
+            (i := abi.Uint64()).set(
+                JsonRef.as_uint64(json_str.get(), Bytes("uint_key"))
+            ),
+            (o := abi.String()).set(
+                JsonRef.as_object(json_str.get(), Bytes("obj_key"))
+            ),
+            output.set(s, i, o),
+        )
 
     @external
     def ed25519verify_bare(self):

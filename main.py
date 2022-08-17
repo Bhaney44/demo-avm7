@@ -20,6 +20,7 @@ def demo():
 
     call_vrf(app_client)
     call_block_ops(app_client)
+    call_json_ref(app_client)
 
     # app_client.call(DemoAVM7.vrf_verify, ... )
     # app_client.call(DemoAVM7.replace, ...)
@@ -91,6 +92,25 @@ def call_block_ops(app_client: client.ApplicationClient):
     ts, hash = result.return_value
     print(f"Block Timestamp: {ts}")
     print(f"Block Hash: {bytes(hash).hex()}")
+
+
+def call_json_ref(app_client: client.ApplicationClient):
+    import json
+
+    obj = {
+        "string_key": "In Xanadu did Kubla Khan",
+        "uint_key": 42,
+        "obj_key": {"lol": "lmao"},
+    }
+
+    json_str = json.dumps(obj)
+    result = app_client.call(DemoAVM7.json_ref, json_str=json_str)
+    print(f"result {result.return_value}")
+
+    string_key_value, uint_key_value, obj_key_value = result.return_value
+    assert obj["string_key"] == string_key_value
+    assert obj["uint_key"] == uint_key_value
+    assert json.dumps(obj["obj_key"]) == obj_key_value
 
 
 if __name__ == "__main__":
