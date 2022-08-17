@@ -1,10 +1,10 @@
+from hashlib import sha3_256
 from algosdk.encoding import encode_address
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
-    TransactionWithSigner,
 )
 from application import DemoAVM7
-from beaker import Application, client, sandbox
+from beaker import client, sandbox
 
 
 def demo():
@@ -21,15 +21,24 @@ def demo():
     # call_vrf(app_client)
     # call_block_ops(app_client)
     # call_json_ref(app_client)
-    call_b64_decode(app_client)
+    # call_b64_decode(app_client)
+    call_sha3_256(app_client)
 
-    # app_client.call(DemoAVM7.b64decode, ...)
     # app_client.call(DemoAVM7.replace, ...)
     # app_client.call(DemoAVM7.ed25519verify_bare, ...):
-    # app_client.call(DemoAVM7.sha3_256, ...):
 
     # print("deleting app")
     # app_client.delete()
+
+
+def call_sha3_256(app_client: client.ApplicationClient):
+    msg = "hash me plz"
+    result = app_client.call(DemoAVM7.sha3_256, to_hash=msg)
+    hex_result = bytes(result.return_value).hex()
+    print(f"got: {hex_result}")
+
+    expected = sha3_256(msg.encode()).hexdigest()
+    assert hex_result == expected
 
 
 def call_b64_decode(app_client: client.ApplicationClient):

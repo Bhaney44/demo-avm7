@@ -73,7 +73,22 @@ class DemoAVM7(Application):
 
     @external
     def b64decode(self, b64encoded: abi.String, *, output: abi.String):
+        """Base64Decode can be used to decode either a std or url encoded string
+
+        Note:
+            IF you have the option to decode prior to submitting the app call
+            transaction, you _should_.
+            This should _only_ be used in the case that there is no way to decode
+            the bytestring prior to submitting the transaction.
+        """
         return output.set(Base64Decode.std(b64encoded.get()))
+
+    @external
+    def sha3_256(self, to_hash: abi.String, *, output: abi.DynamicArray[abi.Byte]):
+        return Seq(
+            (tmp := abi.String()).set(Sha3_256(to_hash.get())),
+            output.decode(tmp.encode()),
+        )
 
     @external
     def replace(self):
@@ -84,11 +99,6 @@ class DemoAVM7(Application):
     @external
     def ed25519verify_bare(self):
         # ed25519verify_bare
-        return Approve()
-
-    @external
-    def sha3_256(self):
-        # sha3_256
         return Approve()
 
     @external
