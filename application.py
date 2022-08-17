@@ -40,7 +40,10 @@ class DemoAVM7(Application):
             output.decode(vrf_result.output_slots[0].load()),
         )
 
-    JsonExampleResult = abi.Tuple3[abi.String, abi.Uint64, abi.String]
+    class JsonExampleResult(abi.NamedTuple):
+        string_key: abi.Field[abi.String]
+        uint_key: abi.Field[abi.Uint64]
+        obj_key: abi.Field[abi.String]
 
     @external
     def json_ref(self, json_str: abi.String, *, output: JsonExampleResult):

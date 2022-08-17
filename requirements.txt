@@ -1,4 +1,4 @@
-beaker-pyteal==0.1.0a0
+beaker-pyteal==0.1.2a0
 cffi==1.15.1
 msgpack==1.0.4
 py-algorand-sdk==1.16.0
