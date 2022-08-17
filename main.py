@@ -27,9 +27,6 @@ def demo():
     print("Calling VRF Verify method")
     call_vrf(app_client)
 
-    print("Calling Block Ops method")
-    call_block_ops(app_client)
-
     print("Calling Json Ref method")
     call_json_ref(app_client)
 
@@ -44,6 +41,9 @@ def demo():
 
     print("Calling Ed25519 Bare method")
     call_ed25519_bare(app_client)
+
+    print("Calling Block Ops method")
+    call_block_ops(app_client)
 
     print("Deleting App")
     app_client.delete()
