@@ -24,15 +24,28 @@ def demo():
     app_id, app_addr, _ = app_client.create()
     print(f"Created app with id {app_id} and address {app_addr}")
 
-    # call_vrf(app_client)
-    # call_block_ops(app_client)
-    # call_json_ref(app_client)
-    # call_b64_decode(app_client)
-    # call_sha3_256(app_client)
-    # call_replace(app_client)
+    print("Calling VRF Verify method")
+    call_vrf(app_client)
+
+    print("Calling Block Ops method")
+    call_block_ops(app_client)
+
+    print("Calling Json Ref method")
+    call_json_ref(app_client)
+
+    print("Calling B64 Decode method")
+    call_b64_decode(app_client)
+
+    print("Calling Sha3_256 method")
+    call_sha3_256(app_client)
+
+    print("Calling Replace method")
+    call_replace(app_client)
+
+    print("Calling Ed25519 Bare method")
     call_ed25519_bare(app_client)
 
-    print("deleting app")
+    print("Deleting App")
     app_client.delete()
 
 
