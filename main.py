@@ -18,27 +18,30 @@ def demo():
     app_id, app_addr, _ = app_client.create()
     print(f"Created app with id {app_id} and address {app_addr}")
 
-    call_vrf(app_client)
-    call_block_ops(app_client)
-    call_json_ref(app_client)
+    # call_vrf(app_client)
+    # call_block_ops(app_client)
+    # call_json_ref(app_client)
+    call_b64_decode(app_client)
 
-    # app_client.call(DemoAVM7.vrf_verify, ... )
-    # app_client.call(DemoAVM7.replace, ...)
     # app_client.call(DemoAVM7.b64decode, ...)
-    # app_client.call(DemoAVM7.json_ref, ...):
+    # app_client.call(DemoAVM7.replace, ...)
     # app_client.call(DemoAVM7.ed25519verify_bare, ...):
     # app_client.call(DemoAVM7.sha3_256, ...):
-    # app_client.call(DemoAVM7.block, ...):
-
-    ## app_client.call(DemoAVM7.replace, ...)
-    ## app_client.call(DemoAVM7.b64decode, ...)
-    ## app_client.call(DemoAVM7.json_ref, ...):
-    ## app_client.call(DemoAVM7.ed25519verify_bare, ...):
-    ## app_client.call(DemoAVM7.sha3_256, ...):
-    ## app_client.call(DemoAVM7.block, ...):
 
     # print("deleting app")
     # app_client.delete()
+
+
+def call_b64_decode(app_client: client.ApplicationClient):
+    import base64
+
+    msg = b"I was a terror since the public school era"
+    result = app_client.call(
+        DemoAVM7.b64decode, b64encoded=base64.b64encode(msg).decode("utf8")
+    )
+    print(f"got {result.return_value}")
+
+    assert msg.decode("utf8") == result.return_value
 
 
 def call_vrf(app_client: client.ApplicationClient):
