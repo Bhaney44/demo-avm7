@@ -1,10 +1,13 @@
 import base64
 import json
 from hashlib import sha3_256
+from typing import cast
+from nacl.signing import SigningKey
 
 from algosdk.encoding import encode_address
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
+    AccountTransactionSigner,
 )
 from application import DemoAVM7
 from beaker import client, sandbox
@@ -21,17 +24,41 @@ def demo():
     app_id, app_addr, _ = app_client.create()
     print(f"Created app with id {app_id} and address {app_addr}")
 
-    call_vrf(app_client)
-    call_block_ops(app_client)
-    call_json_ref(app_client)
-    call_b64_decode(app_client)
-    call_sha3_256(app_client)
-    call_replace(app_client)
-
-    # app_client.call(DemoAVM7.ed25519verify_bare, ...):
+    # call_vrf(app_client)
+    # call_block_ops(app_client)
+    # call_json_ref(app_client)
+    # call_b64_decode(app_client)
+    # call_sha3_256(app_client)
+    # call_replace(app_client)
+    call_ed25519_bare(app_client)
 
     print("deleting app")
     app_client.delete()
+
+
+def call_ed25519_bare(app_client: client.ApplicationClient):
+    # Take the signer from the app client, we already know its
+    # of type AccountTransactionSigner so we cheat a bit here
+    b64_pk = cast(AccountTransactionSigner, app_client.get_signer()).private_key
+    pk = list(base64.b64decode(b64_pk))
+    signing_key = SigningKey(bytes(pk[:32]))
+
+    msg = "Sign me please"
+    sig = signing_key.sign(msg.encode()).signature
+
+    atc = AtomicTransactionComposer()
+    app_client.add_method_call(atc, DemoAVM7.ed25519verify_bare, msg=msg, sig=sig)
+    # Increase our opcode budget, costs 1900
+    # subtract actual app call ops 1900 - 700 = 1200
+    # ceil(1200/700) = 2
+    for x in range(2):
+        app_client.add_method_call(atc, DemoAVM7.noop, note=x.to_bytes(8, "big"))
+
+    group_result = atc.execute(app_client.client, 4)
+    result = group_result.abi_results[0]
+    print(f"got: {result.return_value}")
+
+    assert result.return_value
 
 
 def call_replace(app_client: client.ApplicationClient):

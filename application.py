@@ -100,10 +100,11 @@ class DemoAVM7(Application):
         """Handy"""
         return output.set(Replace(orig.get(), start.get(), replace_with.get()))
 
+    Signature = abi.StaticArray[abi.Byte, Literal[64]]
+
     @external
-    def ed25519verify_bare(self):
-        # ed25519verify_bare
-        return Approve()
+    def ed25519verify_bare(self, msg: abi.String, sig: Signature, *, output: abi.Bool):
+        return output.set(Ed25519Verify_Bare(msg.get(), sig.encode(), Txn.sender()))
 
     @external
     def noop(self):
