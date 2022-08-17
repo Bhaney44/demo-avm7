@@ -61,13 +61,11 @@ class DemoAVM7(Application):
     BlockDetails = abi.Tuple2[abi.Uint64, BlockSeed]
 
     @external
-    def block(self, *, output: BlockDetails):
+    def block(self, round: abi.Uint64, *, output: BlockDetails):
         """New block operations for getting timestamp or seed of a historical round"""
         return Seq(
-            (ts := abi.Uint64()).set(Block.timestamp(Global.round() - Int(3))),
-            (seed := abi.make(self.BlockSeed)).decode(
-                Block.seed(Global.round() - Int(3))
-            ),
+            (ts := abi.Uint64()).set(Block.timestamp(round.get())),
+            (seed := abi.make(self.BlockSeed)).decode(Block.seed(round.get())),
             output.set(ts, seed),
         )
 

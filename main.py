@@ -1,3 +1,5 @@
+import base64
+import json
 from hashlib import sha3_256
 from algosdk.encoding import encode_address
 from algosdk.atomic_transaction_composer import (
@@ -18,17 +20,21 @@ def demo():
     app_id, app_addr, _ = app_client.create()
     print(f"Created app with id {app_id} and address {app_addr}")
 
-    # call_vrf(app_client)
-    # call_block_ops(app_client)
-    # call_json_ref(app_client)
-    # call_b64_decode(app_client)
+    call_vrf(app_client)
+    call_block_ops(app_client)
+    call_json_ref(app_client)
+    call_b64_decode(app_client)
     call_sha3_256(app_client)
+    call_replace(app_client)
 
-    # app_client.call(DemoAVM7.replace, ...)
     # app_client.call(DemoAVM7.ed25519verify_bare, ...):
 
-    # print("deleting app")
-    # app_client.delete()
+    print("deleting app")
+    app_client.delete()
+
+
+def call_replace(app_client: client.ApplicationClient):
+    pass
 
 
 def call_sha3_256(app_client: client.ApplicationClient):
@@ -42,13 +48,11 @@ def call_sha3_256(app_client: client.ApplicationClient):
 
 
 def call_b64_decode(app_client: client.ApplicationClient):
-    import base64
-
     msg = b"I was a terror since the public school era"
     result = app_client.call(
         DemoAVM7.b64decode, b64encoded=base64.b64encode(msg).decode("utf8")
     )
-    print(f"got {result.return_value}")
+    print(f"got: {result.return_value}")
 
     assert msg.decode("utf8") == result.return_value
 
@@ -82,13 +86,12 @@ def call_vrf(app_client: client.ApplicationClient):
         # Add dummy transactions to increase op budget, a logic sig could also be used
         # to decrease the cost since it has a budget of 20k (apps have 700)
         app_client.add_method_call(atc, DemoAVM7.noop, note=x.to_bytes(8, "big"))
-    result = atc.execute(app_client.client, 4)
+    group_result = atc.execute(app_client.client, 4)
+    result = group_result.abi_results[0]
+    print(f"got: {result.return_value}")
 
-    actual_result = bytes(result.abi_results[0].return_value).hex()
-
+    actual_result = bytes(result.return_value).hex()
     expected_result = "ed04a66ab306b3b39fe06da21af0d7bee5020d62cd18c39dbdb5c4f222336c2ada42ac1c110be3254872318240f55547da145859786b7d17be1002d4dde209b7"
-    print(f"VRF Result: {actual_result}")
-
     assert actual_result == expected_result
 
 
@@ -96,19 +99,30 @@ def call_block_ops(app_client: client.ApplicationClient):
     """Calls the new block header accessors for getting timestamp and
     seed from a historical block
     """
+
     # Lower the range of last-first so we get access to more blocks
     sp = app_client.client.suggested_params()
     sp.last = sp.first + 5
 
-    result = app_client.call(DemoAVM7.block, suggested_params=sp)
-    ts, hash = result.return_value
-    print(f"Block Timestamp: {ts}")
-    print(f"Block Hash: {bytes(hash).hex()}")
+    round = sp.first - 10
+
+    result = app_client.call(DemoAVM7.block, round=round, suggested_params=sp)
+    print(f"got: {result.return_value}")
+    ts, seed = result.return_value
+
+    block_info = app_client.client.block_info(round)["block"]
+    actual_ts = block_info["ts"]
+    actual_seed = (
+        list(base64.b64decode(block_info["seed"]))
+        if "seed" in block_info
+        else list(bytes(32))
+    )
+
+    assert ts == actual_ts
+    assert seed == actual_seed
 
 
 def call_json_ref(app_client: client.ApplicationClient):
-    import json
-
     obj = {
         "string_key": "In Xanadu did Kubla Khan",
         "uint_key": 42,
@@ -117,7 +131,7 @@ def call_json_ref(app_client: client.ApplicationClient):
 
     json_str = json.dumps(obj)
     result = app_client.call(DemoAVM7.json_ref, json_str=json_str)
-    print(f"result {result.return_value}")
+    print(f"got: {result.return_value}")
 
     string_key_value, uint_key_value, obj_key_value = result.return_value
     assert obj["string_key"] == string_key_value
