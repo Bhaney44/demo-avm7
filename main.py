@@ -50,14 +50,18 @@ def demo():
 
 
 def call_ed25519_bare(app_client: client.ApplicationClient):
-    # Take the signer from the app client, we already know its
-    # of type AccountTransactionSigner so we cheat a bit here
-    b64_pk = cast(AccountTransactionSigner, app_client.get_signer()).private_key
-    pk = list(base64.b64decode(b64_pk))
-    signing_key = SigningKey(bytes(pk[:32]))
+
+    def sign_msg(msg: str)-> bytes:
+        """ utility function for signing arbitrary data """
+        # Take the signer from the app client, we already know its
+        # of type AccountTransactionSigner so we cheat a bit here
+        b64_pk = cast(AccountTransactionSigner, app_client.get_signer()).private_key
+        pk = list(base64.b64decode(b64_pk))
+        signing_key = SigningKey(bytes(pk[:32]))
+        return signing_key.sign(msg.encode()).signature
 
     msg = "Sign me please"
-    sig = signing_key.sign(msg.encode()).signature
+    sig = sign_msg(msg)
 
     atc = AtomicTransactionComposer()
     app_client.add_method_call(atc, DemoAVM7.ed25519verify_bare, msg=msg, sig=sig)

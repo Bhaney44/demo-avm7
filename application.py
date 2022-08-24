@@ -122,6 +122,11 @@ class DemoAVM7(Application):
         *,
         output: abi.String,
     ):
+        """
+            replace(abcdef, 1, xyz) => axyzef 
+            cannot _grow_ original string
+        """
+
         return output.set(Replace(orig.get(), start.get(), replace_with.get()))
 
     @external
