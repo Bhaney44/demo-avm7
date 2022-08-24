@@ -5,19 +5,18 @@ from beaker import *
 
 # Define some types by name for handy reference
 
-VrfProof = abi.StaticArray[abi.Byte, Literal[80]]
-VrfHash = abi.StaticArray[abi.Byte, Literal[64]]
+VrfProof = abi.StaticBytes[Literal[80]]
+VrfHash = abi.StaticBytes[Literal[64]]
 
 
-BlockSeed = abi.StaticArray[abi.Byte, Literal[32]]
-
+BlockSeed = abi.StaticBytes[Literal[32]]
 
 class BlockDetails(abi.NamedTuple):
     ts: abi.Field[abi.Uint64]
     seed: abi.Field[BlockSeed]
 
 
-Signature = abi.StaticArray[abi.Byte, Literal[64]]
+Signature = abi.StaticBytes[Literal[64]]
 
 
 class JsonExampleResult(abi.NamedTuple):
@@ -32,7 +31,7 @@ class DemoAVM7(Application):
     @external
     def vrf_verify(
         self,
-        msg: abi.DynamicArray[abi.Byte],
+        msg: abi.DynamicBytes,
         proof: VrfProof,
         pub_key: abi.Address,
         *,
@@ -44,19 +43,19 @@ class DemoAVM7(Application):
             vrf_result := VrfVerify.algorand(
                 # Note: in practice the message is likely to be something like:
                 #    sha512_256(concat(itob(round), block.seed(round)))
-                # Get the bytes from the message (chop off 2 as they're the uint16 encoded length)
-                Suffix(msg.encode(), Int(2)),
+                # Get the bytes from the message 
+                msg.get(),
                 # Get the bytes from the proof
-                proof.encode(),
+                proof.get(),
                 # Note: in practice this is likely to be some hardcoded public key or one of
                 #   a set of "pre-approved" public keys
                 # Get the pubkey bytes
-                pub_key.encode(),
+                pub_key.get(),
             ),
             # Check Successful
             Assert(vrf_result.output_slots[1].load() == Int(1)),
             # Write the result to the output
-            output.decode(vrf_result.output_slots[0].load()),
+            output.set(vrf_result.output_slots[0].load()),
         )
 
     @external
@@ -64,7 +63,7 @@ class DemoAVM7(Application):
         """New block operations for getting timestamp or seed of a historical round"""
         return Seq(
             (ts := abi.Uint64()).set(Block.timestamp(round.get())),
-            (seed := abi.make(BlockSeed)).decode(Block.seed(round.get())),
+            (seed := abi.make(BlockSeed)).set(Block.seed(round.get())),
             output.set(ts, seed),
         )
 
@@ -96,10 +95,9 @@ class DemoAVM7(Application):
         )
 
     @external
-    def sha3_256(self, to_hash: abi.String, *, output: abi.DynamicArray[abi.Byte]):
+    def sha3_256(self, to_hash: abi.String, *, output: abi.DynamicBytes):
         return Seq(
-            (tmp := abi.String()).set(Sha3_256(to_hash.get())),
-            output.decode(tmp.encode()),
+            output.set(Sha3_256(to_hash.get())),
         )
 
     @external
@@ -115,7 +113,7 @@ class DemoAVM7(Application):
 
     @external
     def ed25519verify_bare(self, msg: abi.String, sig: Signature, *, output: abi.Bool):
-        return output.set(Ed25519Verify_Bare(msg.get(), sig.encode(), Txn.sender()))
+        return output.set(Ed25519Verify_Bare(msg.get(), sig.get(), Txn.sender()))
 
     @external
     def noop(self):
