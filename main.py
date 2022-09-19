@@ -4,7 +4,7 @@ from hashlib import sha3_256
 from typing import cast
 from nacl.signing import SigningKey
 
-from algosdk.encoding import encode_address
+from algosdk.encoding import encode_address, decode_address
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     AccountTransactionSigner,
@@ -50,9 +50,8 @@ def demo():
 
 
 def call_ed25519_bare(app_client: client.ApplicationClient):
-
-    def sign_msg(msg: str)-> bytes:
-        """ utility function for signing arbitrary data """
+    def sign_msg(msg: str) -> bytes:
+        """utility function for signing arbitrary data"""
         # Take the signer from the app client, we already know its
         # of type AccountTransactionSigner so we cheat a bit here
         b64_pk = cast(AccountTransactionSigner, app_client.get_signer()).private_key
@@ -63,8 +62,11 @@ def call_ed25519_bare(app_client: client.ApplicationClient):
     msg = "Sign me please"
     sig = sign_msg(msg)
 
+    pubkey = decode_address(app_client.get_sender())
     atc = AtomicTransactionComposer()
-    app_client.add_method_call(atc, DemoAVM7.ed25519verify_bare, msg=msg, sig=sig)
+    app_client.add_method_call(
+        atc, DemoAVM7.ed25519verify_bare, msg=msg, pubkey=pubkey, sig=sig
+    )
     # Increase our opcode budget, costs 1900
     # subtract actual app call ops 1900 - 700 = 1200
     # ceil(1200/700) = 2
@@ -194,4 +196,8 @@ def call_json_ref(app_client: client.ApplicationClient):
 
 
 if __name__ == "__main__":
+    import json
+
+    with open("demo_avm7.json", "w") as f:
+        f.write(json.dumps(DemoAVM7().application_spec()))
     demo()
