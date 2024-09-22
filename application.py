@@ -1,17 +1,26 @@
+####################################################
+# Imports
+####################################################
 from typing import Literal
-
 from pyteal import *
 from beaker import *
+####################################################
 
-# Define some types by name for handy reference
-
+####################################################
+# Define types
+####################################################
 VrfProof = abi.StaticBytes[Literal[80]]
 VrfHash = abi.StaticBytes[Literal[64]]
+####################################################
 
-
+####################################################
+# Blockseed
+####################################################
 BlockSeed = abi.StaticBytes[Literal[32]]
 
-
+####################################################
+#Block Details Class
+####################################################
 class BlockDetails(abi.NamedTuple):
     ts: abi.Field[abi.Uint64]
     seed: abi.Field[BlockSeed]
